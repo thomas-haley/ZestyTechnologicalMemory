@@ -1,5 +1,4 @@
 # Thomas_Challenge_2
- Thomas Haley Coding Challenge 2
 
 ## Notes
 - The "input.json" file is the ingress point for this application, anything in that file will be read as json and converted.
