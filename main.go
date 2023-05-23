@@ -34,6 +34,7 @@ func main() {
 	}
 
 	os.WriteFile("output.json", outMarsh, 0644)
+  fmt.Println(output)
 }
 
 func convert(input any) any {
@@ -90,7 +91,6 @@ func convert(input any) any {
 					if res != nil && reflect.TypeOf(res).Kind() == reflect.Slice {
 						return res
 					}
-					fmt.Println(output)
 				}
 				return nil
 			default:
