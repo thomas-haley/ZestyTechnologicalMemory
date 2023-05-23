@@ -13,6 +13,9 @@ import (
 )
 
 func main() {
+	timeStart := time.Now().UnixMicro()
+	//Delete output file
+	os.Remove("output.json")
 
 	//Open file
 	file, err := os.Open("input.json")
@@ -27,18 +30,31 @@ func main() {
 
 	json.Unmarshal(bytes, &pkg)
 
-	timeStart := time.Now().UnixMicro()
 	output := convert(pkg)
-	timeEnd := time.Now().UnixMicro()
 
-	dTime := timeEnd - timeStart
-	fmt.Printf("Time to convert: %v microseconds\n", dTime)
+	//Output to console
+	fmt.Println(output)
 	outMarsh, err := json.Marshal(output)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	os.WriteFile("output.json", outMarsh, 0644)
+	timeEnd := time.Now().UnixMicro()
+	//Program execution "ends"
+
+	//Execution time tracking
+	dTime := timeEnd - timeStart
+
+	timeFile, err := os.OpenFile("time.txt", os.O_APPEND|os.O_CREATE, 0600)
+	if err != nil {
+		panic(err)
+	}
+
+	defer timeFile.Close()
+	//Seek to end of file
+	timeFile.Seek(0, 2)
+	timeFile.WriteString(fmt.Sprintf("%v,", dTime))
 }
 
 func convert(input any) any {
@@ -83,6 +99,7 @@ func convert(input any) any {
 				if reflect.TypeOf(v).Kind() == reflect.Map {
 					res := convert(v)
 
+					//Ensure output returned proper type
 					if res != nil && reflect.TypeOf(res).Kind() == reflect.Map {
 						return res
 					}
@@ -92,6 +109,7 @@ func convert(input any) any {
 				if reflect.TypeOf(v).Kind() == reflect.Slice {
 					res := convert(v)
 
+					//Ensure output returned proper type
 					if res != nil && reflect.TypeOf(res).Kind() == reflect.Slice {
 						return res
 					}
@@ -101,6 +119,7 @@ func convert(input any) any {
 				if reflect.TypeOf(v).Kind() == reflect.Map {
 					res := convert(v)
 					if res != nil {
+						//Handle case where res SHOULD be nil
 						if res == "null" {
 							res = nil
 						}
@@ -116,6 +135,7 @@ func convert(input any) any {
 		}
 		return nil
 	} else if reflect.TypeOf(input).Kind() == reflect.Slice {
+		//If value is a slice, recursively call every value
 		var output []any
 		input, err := input.([]any)
 		if !err {
@@ -123,7 +143,9 @@ func convert(input any) any {
 		}
 
 		for _, v := range input {
+			//If value is map
 			if reflect.TypeOf(v).Kind() == reflect.Map {
+				//Recursively call with cast
 				res := convert(v.(map[string]any))
 				if res != nil {
 					output = append(output, res)
@@ -160,6 +182,7 @@ func convertString(in string) any {
 func convertNum(in string) any {
 	//Sanitize
 	in = strings.TrimSpace(in)
+	//Strip lead 0's
 	in = strings.TrimLeft(in, "0")
 
 	//Check if float or num
@@ -199,10 +222,9 @@ func convertNull(in string) any {
 	//Sanitize
 	in = strings.TrimSpace(in)
 	out, err := strconv.ParseBool(in)
-	if err == nil {
-		if out {
-			return "null"
-		}
+	if err == nil && out {
+		//Returning string null to be handled by unique case in convert function
+		return "null"
 	}
 
 	return nil
