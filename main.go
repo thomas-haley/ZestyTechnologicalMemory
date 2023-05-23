@@ -13,6 +13,7 @@ import (
 )
 
 func main() {
+
 	//Open file
 	file, err := os.Open("input.json")
 	if err != nil {
@@ -26,15 +27,18 @@ func main() {
 
 	json.Unmarshal(bytes, &pkg)
 
+	timeStart := time.Now().UnixMicro()
 	output := convert(pkg)
+	timeEnd := time.Now().UnixMicro()
 
+	dTime := timeEnd - timeStart
+	fmt.Printf("Time to convert: %v microseconds\n", dTime)
 	outMarsh, err := json.Marshal(output)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	os.WriteFile("output.json", outMarsh, 0644)
-  fmt.Println(output)
 }
 
 func convert(input any) any {
